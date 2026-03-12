@@ -21,29 +21,43 @@ echo "  ╚═╝        ╚═╝   ╚═╝  ╚═╝╚═╝╚═╝  ╚
 echo -e "${BLUE}          -- EL IDE DEFINITIVO PARA PYTHON --${NC}"
 echo ""
 
-echo -e "${YELLOW}[!] Iniciando instalación de dependencias para PyKing...${NC}"
+echo -e "${YELLOW}[!] Iniciando instalación de PyKing IDE...${NC}"
 sleep 1
 
 # 1. ACTUALIZACIÓN DE REPOSITORIOS
-echo -e "\n${BLUE}[1/4] Actualizando sistema...${NC}"
+echo -e "\n${BLUE}[1/5] Actualizando sistema...${NC}"
 pkg update -y && pkg upgrade -y
 
 # 2. INSTALACIÓN DE PAQUETES DEL SISTEMA
-echo -e "\n${BLUE}[2/4] Instalando herramientas base (Python, Node, Git, Build-Tools)...${NC}"
+echo -e "\n${BLUE}[2/5] Instalando herramientas base (Python, Node, Git, Build-Tools)...${NC}"
 pkg install -y python nodejs neovim git build-essential clang binutils libexpat
 
 # 3. INSTALACIÓN DE HERRAMIENTAS DE DESARROLLO (PIP)
-echo -e "\n${BLUE}[3/4] Instalando Servidores de Lenguaje y Debuggers...${NC}"
+echo -e "\n${BLUE}[3/5] Instalando Servidores de Lenguaje y Debuggers...${NC}"
 echo -e "${YELLOW}Esto puede tardar un poco dependiendo de tu conexión...${NC}"
 
-# Intentar instalación normal y con fallback
 pip install --upgrade pip
 pip install basedpyright ruff debugpy --break-system-packages || \
 pip install basedpyright ruff debugpy --user || \
 echo -e "${RED}[!] Error en PIP. Intentando vía PKG...${NC}" && pkg install -y pyright ruff
 
-# 4. VERIFICACIÓN FINAL
-echo -e "\n${BLUE}[4/4] Verificando instalación...${NC}"
+# 4. DESPLEGANDO CONFIGURACIÓN DEL IDE
+echo -e "\n${BLUE}[4/5] Configurando Neovim con PyKing...${NC}"
+mkdir -p ~/.config/nvim
+
+# Backup de config antigua si existe
+if [ -f ~/.config/nvim/init.lua ]; then
+    echo -e "${YELLOW}[!] Se detectó una configuración previa. Haciendo backup en ~/.config/nvim_backup${NC}"
+    mv ~/.config/nvim ~/.config/nvim_backup
+    mkdir -p ~/.config/nvim
+fi
+
+# Copiar archivos desde el repositorio clonado
+cp -r nvim/* ~/.config/nvim/
+echo -e "${GREEN}[✔] Archivos de configuración desplegados.${NC}"
+
+# 5. VERIFICACIÓN FINAL
+echo -e "\n${BLUE}[5/5] Verificando instalación...${NC}"
 echo -n "Python: " && python --version
 echo -n "Neovim: " && nvim --version
 echo -n "Ruff:   " && ruff --version
