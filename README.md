@@ -49,7 +49,7 @@ pkg install git -y
 ### 3. Clonar el Repositorio
 Copia el proyecto a tu dispositivo:
 ```bash
-git clone https://github.com/TU-USUARIO/IDE-PYKING-TERMUX
+git clone https://github.com/ble-bot/IDE-PYKING-TERMUX
 cd IDE-PYKING-TERMUX
 ```
 
