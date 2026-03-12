@@ -29,15 +29,43 @@ Pulsa **`i`** en el menú de inicio para abrir la guía interactiva:
 
 ---
 
-## 🛠️ Instalación Rápida (Recomendado)
+## 🛠️ Guía de Instalación Paso a Paso
 
-Solo tienes que ejecutar este comando en tu Termux:
+Sigue estos pasos para una instalación limpia y profesional:
 
+### 1. Preparar el Entorno de Termux
+Primero, asegúrate de que Termux esté actualizado y tenga los permisos de almacenamiento:
 ```bash
-bash setup_pyking.sh
+termux-setup-storage
+pkg update && pkg upgrade -y
 ```
 
-El script se encargará de instalar Python, Node, Neovim, Git, compiladores y todas las herramientas de Python necesarias.
+### 2. Instalar Git
+Si no tienes Git instalado, ejecutas:
+```bash
+pkg install git -y
+```
+
+### 3. Clonar el Repositorio
+Copia el proyecto a tu dispositivo:
+```bash
+git clone https://github.com/TU-USUARIO/IDE-PYKING-TERMUX
+cd IDE-PYKING-TERMUX
+```
+
+### 4. Permisos y Ejecución del Script
+Dale permisos de ejecución al instalador y ejecútalo:
+```bash
+chmod +x setup_pyking.sh
+./setup_pyking.sh
+```
+
+### 5. Finalización
+El script configurará Neovim, Python y todas las herramientas necesarias. Una vez terminado, solo escribe:
+```bash
+nvim
+```
+¡Listo! Ya tienes tu entorno PyKing configurado.
 
 ---
 
