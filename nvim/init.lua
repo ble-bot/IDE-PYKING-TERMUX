@@ -19,7 +19,7 @@ vim.opt.mouse = 'a'
 vim.opt.tabstop = 4
 vim.opt.shiftwidth = 4
 vim.opt.expandtab = true
-vim.opt.updatetime = 250
+vim.opt.updatetime = 100 -- RECORTE DE TIEMPO: De 250ms a 100ms para respuesta instantánea
 vim.opt.cursorline = true
 
 -- 4. PLUGINS (lazy.nvim)
@@ -143,15 +143,22 @@ vim.diagnostic.config({
         prefix = '●', 
         source = "if_many",
     },
-    signs = true,         -- Íconos en el lateral
-    underline = true,     -- Subrayar errores
-    update_in_insert = true, -- Ver errores mientras escribes
+    signs = true,
+    underline = true,
+    update_in_insert = true, -- ¡TIEMPO REAL ABSOLUTO!
     severity_sort = true,
     float = {
         border = "rounded",
         source = "always",
     },
 })
+
+-- Reducir el lag del servidor LSP (Configuración avanzada)
+vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
+    vim.lsp.diagnostic.on_publish_diagnostics, {
+        update_in_insert = true,
+    }
+)
 
 -- 6. TEMA CATPPUCCIN
 local cp_status, catppuccin = pcall(require, "catppuccin")
@@ -210,17 +217,66 @@ if lspconfig_status then
         },
     })
     
-    -- Lógica de Servidor de Lenguaje (Inteligente)
+    -- Lógica de Servidor de Lenguaje (Súper Inteligente - Configuración Optimizada)
+    local pyking_on_attach = function(client, bufnr)
+        -- Activar Inlay Hints (Tipos y parámetros visuales)
+        if client.server_capabilities.inlayHintProvider then
+            vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+        end
+    end
+
     if vim.fn.executable("basedpyright-langserver") == 1 then
         lspconfig.basedpyright.setup({ 
             cmd = { "basedpyright-langserver", "--stdio" },
             capabilities = capabilities,
-            settings = { basedpyright = { analysis = { typeCheckingMode = "basic" } } } 
+            on_attach = pyking_on_attach,
+            settings = { 
+                basedpyright = { 
+                    analysis = { 
+                        typeCheckingMode = "standard", -- Más inteligente que "basic"
+                        autoImportCompletions = true,
+                        autoSearchPaths = true,
+                        diagnosticMode = "openFilesOnly",
+                        useLibraryCodeForTypes = true,
+                        -- "Cerebro" del IDE: Filtramos lo molesto pero dejamos lo importante
+                        diagnosticSeverityOverrides = {
+                            reportOptionalMemberAccess = "none",
+                            reportOptionalSubscript = "none",
+                            reportOptionalCall = "none",
+                            reportAttributeAccessIssue = "none",
+                            reportGeneralTypeIssues = "none",
+                            reportAny = "none",
+                            reportArgumentType = "none", -- Soluciona el error de urljoin
+                            reportCallIssue = "none",    -- Evita errores al llamar funciones dinámicas
+                            reportIndexIssue = "none",   -- Evita errores con ["href"] o similares
+                            reportUnknownMemberAccess = "none",
+                            reportUnknownVariableType = "none",
+                            reportUnknownArgumentType = "none",
+                        },
+                    },
+                },
+            },
+            -- ACTIVAR INLAY HINTS (La magia visual)
+            on_attach = function(client, bufnr)
+                if client.server_capabilities.inlayHintProvider then
+                    vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+                end
+            end,
         })
     elseif vim.fn.executable("pyright-langserver") == 1 then
         lspconfig.pyright.setup({ 
             cmd = { "pyright-langserver", "--stdio" },
             capabilities = capabilities,
+            on_attach = pyking_on_attach,
+            settings = {
+                python = {
+                    analysis = {
+                        autoSearchPaths = true,
+                        useLibraryCodeForTypes = true,
+                        diagnosticMode = "openFilesOnly",
+                    },
+                },
+            },
         })
     end
     
@@ -263,17 +319,29 @@ if c_status then
             completion = cmp.config.window.bordered(),
             documentation = cmp.config.window.bordered(),
         },
+        -- PRE-SELECCIÓN: Esto hace que la primera opción siempre esté lista para ENTER
+        preselect = cmp.PreselectMode.Item,
         formatting = {
             format = lk_status and lspkind.cmp_format({
                 mode = 'symbol_text',
+                preset = 'codicons', -- ESTOS SÍ TE FUNCIONABAN
                 maxwidth = 50,
                 ellipsis_char = '...',
+                symbol_map = {
+                    Text = "", Method = "", Function = "", Constructor = "",
+                    Field = "", Variable = "", Class = "", Interface = "",
+                    Module = "", Property = "", Unit = "", Value = "",
+                    Enum = "", Keyword = "", Snippet = "", Color = "",
+                    File = "", Reference = "", Folder = "", EnumMember = "",
+                    Constant = "", Struct = "", Event = "", Operator = "",
+                    TypeParameter = "",
+                },
             }) or nil,
         },
         mapping = cmp.mapping.preset.insert({
             ['<Tab>'] = cmp.mapping.select_next_item(),
             ['<S-Tab>'] = cmp.mapping.select_prev_item(),
-            ['<CR>'] = cmp.mapping.confirm({ select = true }),
+            ['<CR>'] = cmp.mapping.confirm({ select = true }), -- ENTER confirma la primera opción
             ['<C-Space>'] = cmp.mapping.complete(),
         }),
         sources = cmp.config.sources({
@@ -284,18 +352,21 @@ if c_status then
             { name = 'path', priority = 250 },
         }),
         completion = {
-            keyword_length = 2, -- Aparece tras 2 caracteres (antes era 1)
+            keyword_length = 1,
             completeopt = 'menu,menuone,noinsert',
         },
         experimental = {
-            ghost_text = true, -- Muestra la predicción en gris antes de aceptarla
+            ghost_text = true,
         }
     })
 
-    -- INTEGRACIÓN DE AUTOPAIRS CON CMP (Añade paréntesis automáticamente)
+    -- INTEGRACIÓN DE AUTOPAIRS: Definitivo para Paréntesis
     local cmp_autopairs_status, cmp_autopairs = pcall(require, "nvim-autopairs.completion.cmp")
     if cmp_autopairs_status then
-        cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done())
+        -- Añade paréntesis automáticamente tras ENTER o TAB en funciones
+        cmp.event:on('confirm_done', cmp_autopairs.on_confirm_done({
+            map_char = { tex = "" }
+        }))
     end
 end
 

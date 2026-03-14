@@ -53,6 +53,16 @@ git clone https://github.com/ble-bot/IDE-PYKING-TERMUX
 cd IDE-PYKING-TERMUX
 ```
 
+---
+
+## 📋 Requisitos Previos
+
+Para que todo funcione a la perfección, PyKing necesita:
+- **Neovim 0.9+** (Instalado automáticamente por el script).
+- **NodeJS & NPM** (Para los servidores de lenguaje como Pyright).
+- **Python 3.10+**.
+- **Build-essential** (Para compilar plugins de Neovim).
+
 ### 4. Permisos y Ejecución del Script
 Dale permisos de ejecución al instalador y ejecútalo:
 ```bash
